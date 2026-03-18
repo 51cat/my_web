@@ -4,32 +4,33 @@
 
 ---
 
-## 1. 下一步我该如何实现本地真正运行
+## 1. 本地运行与部署 (Local Deployment)
 
-本项目目前因为未检测到 Docker 环境，自动以后端“演示模式”容灾运行（即如果没有检测到 Docker，也会通过 mock 逻辑跑完全部流程）。要让它真正处理您的本地数据，只需简单两步：
+要让该工具箱在您的个人电脑（Windows/Mac/Linux）上真正跑起来，只需以下几步：
 
-### 1.1 安装 Docker
-本项目**完全依赖 Docker** 来执行分析工具，这样做以免除您折腾 Python、R 或 C++ 的环境依赖带来的烦恼。
-- 请前往 [Docker 官网](https://www.docker.com/products/docker-desktop/) 下载并安装 Docker Desktop for Windows / Mac。
-- 安装完毕后，打开命令行（CMD 或 PowerShell），输入 `docker --version`。确保其能正常输出版本号。
+### 1.1 安装 Docker (核心依赖)
+本项目**完全依赖 Docker** 来确保生信工具的跨平台一致性。
+- 请前往 [Docker 官网](https://www.docker.com/products/docker-desktop/) 下载并安装 Docker Desktop。
+- 安装完毕后，在终端输入 `docker --version` 确认安装成功。
 
-### 1.2 准备镜像库
-项目配置文件 (`tools/*.json`) 内预设了一些镜像。在网页上首次运行某个工具时，Docker 会自动在后台拉取（下载）该镜像（这可能需要一些时间）。如果你想要更流畅的体验，也可以提前拉取：
+### 1.2 准备代码环境
+在项目根目录下，执行以下命令安装网页后台所需的零件：
 ```bash
-docker pull biocontainers/fastqc:v0.11.9_cv8
-docker pull quay.io/biocontainers/trim-galore:0.6.7--hdfd78af_0
-```
-如果您有**自己开发的工具**（例如 `ohmycelltype`），我们需要在您的电脑本地将其构建为一个镜像。在项目根目录下利用我写好的 Dockerfile 进行构建：
-```bash
-docker build -f tools/ohmycelltype.Dockerfile -t ohmycelltype:latest /您的真实工具代码所在目录/
+npm install
 ```
 
-### 1.3 启动项目
-上述环境搭建好即代表"本地真正运行"准备完毕。在本项目目录命令行里一如既往地启动即可：
+### 1.3 启动与运行
+执行以下命令启动服务：
 ```bash
 npm start
 ```
-再去浏览器访问 `http://localhost:3000` 并上传文件点击 Run，后台便会使用真实的 Docker 容器来分析你的数据！
+然后在浏览器访问 `http://localhost:3000`。上传文件并点击 **RUN CONTAINER**，后台就会自动调用本地 Docker 镜像来处理你的真实数据了！
+
+### 1.4 (进阶) 构建自己的工具镜像
+如果您有**自己开发的 Docker 生信工具**（例如 `ohmycelltype`），在本地构建它的镜像：
+```bash
+docker build -f tools/ohmycelltype.Dockerfile -t ohmycelltype:latest .
+```
 
 ---
 
