@@ -554,6 +554,31 @@
       box-shadow: 0 0 0 2.5px rgba(42, 100, 150, 0.15);
     }
 
+    /* Multi-select checkboxes */
+    .multi-select-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      padding: 10px 14px;
+      border: 1px solid rgba(0,0,0,0.1);
+      background: rgba(255,255,255,0.6);
+      border-radius: 8px;
+    }
+
+    .multi-select-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    .multi-select-item input[type="checkbox"] {
+      cursor: pointer;
+      width: 15px;
+      height: 15px;
+    }
+
     /* File upload */
     .file-upload-wrapper {
       position: relative;
@@ -1100,6 +1125,29 @@
           });
           item.appendChild(selectEl);
 
+        } else if (p.type === 'multi-select') {
+          // Multi-checkbox group
+          const group = document.createElement('div');
+          group.className = 'multi-select-group';
+          group.id = 'group-' + p.key;
+
+          const options = p.options || [];
+          const defaults = Array.isArray(p.default) ? p.default : (p.default ? String(p.default).split(',') : []);
+
+          options.forEach(opt => {
+            const val = typeof opt === 'object' ? opt.value : opt;
+            const label = typeof opt === 'object' ? opt.label : val;
+
+            const labelEl = document.createElement('label');
+            labelEl.className = 'multi-select-item';
+            labelEl.innerHTML = `
+              <input type="checkbox" name="multi-${p.key}" value="${val}" ${defaults.includes(String(val)) ? 'checked' : ''}>
+              ${label}
+            `;
+            group.appendChild(labelEl);
+          });
+          item.appendChild(group);
+
         } else {
           // Text / Number input
           const inputEl = document.createElement('input');
@@ -1140,6 +1188,10 @@
         if (p.type === 'file') {
           const fileInput = document.getElementById('param-' + p.key);
           if (fileInput?.files[0]) formData.append(p.key, fileInput.files[0]);
+        } else if (p.type === 'multi-select') {
+          const checkboxes = document.querySelectorAll(`input[name="multi-${p.key}"]:checked`);
+          const vals = Array.from(checkboxes).map(cb => cb.value);
+          if (vals.length > 0) params[p.key] = vals.join(',');
         } else {
           const val = document.getElementById('param-' + p.key)?.value;
           if (val !== undefined && val !== '') params[p.key] = val;
