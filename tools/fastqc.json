@@ -1,0 +1,31 @@
+{
+  "id": "fastqc",
+  "name": "FastQC",
+  "type": "Python / Docker",
+  "image": "biocontainers/fastqc:v0.11.9_cv8",
+  "description": "高通量测序数据质量控制分析工具",
+  "cmd": ["fastqc", "{input}", "--threads", "{threads}", "--format", "{format}", "-o", "/output"],
+  "params": [
+    {
+      "key": "input",
+      "label": "输入 FASTQ 文件",
+      "type": "file",
+      "required": true,
+      "description": "原始测序文件 (.fastq / .fastq.gz)"
+    },
+    {
+      "key": "threads",
+      "label": "线程数",
+      "type": "number",
+      "default": 4,
+      "description": "并行线程数"
+    },
+    {
+      "key": "format",
+      "label": "文件格式",
+      "type": "string",
+      "default": "fastq",
+      "description": "bam / sam / fastq"
+    }
+  ]
+}

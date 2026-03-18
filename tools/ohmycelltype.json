@@ -1,0 +1,58 @@
+{
+  "id": "ohmycelltype",
+  "name": "OhMyCellType",
+  "type": "Python / Docker",
+  "image": "ohmycelltype:latest",
+  "description": "单细胞 RNA-seq 自动细胞类型注释工具",
+  "output_extension": ".csv",
+  "cmd": [
+    "ohmycelltype",
+    "--input",  "{input}",
+    "--marker", "{marker}",
+    "--output", "/output",
+    "--species", "{species}",
+    "--min_cells", "{min_cells}",
+    "--threads", "{threads}"
+  ],
+  "params": [
+    {
+      "key": "input",
+      "label": "输入文件 (h5ad / csv)",
+      "type": "file",
+      "required": true,
+      "description": "单细胞表达矩阵，支持 AnnData .h5ad 或 counts matrix .csv"
+    },
+    {
+      "key": "marker",
+      "label": "Marker 基因文件 (可选)",
+      "type": "file",
+      "required": false,
+      "description": "自定义 marker 基因 CSV，留空则使用内置数据库"
+    },
+    {
+      "key": "species",
+      "label": "物种",
+      "type": "select",
+      "options": [
+        { "label": "人类 (Human)", "value": "human" },
+        { "label": "小鼠 (Mouse)", "value": "mouse" }
+      ],
+      "default": "human",
+      "description": "选择用于分析的参考基因组物种"
+    },
+    {
+      "key": "min_cells",
+      "label": "最小细胞数",
+      "type": "number",
+      "default": 10,
+      "description": "细胞类型至少包含的细胞数（过滤阈值）"
+    },
+    {
+      "key": "threads",
+      "label": "线程数",
+      "type": "number",
+      "default": 4,
+      "description": "并行线程数"
+    }
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "id": "trim_galore",
+  "name": "Trim Galore",
+  "type": "Python / Docker",
+  "image": "quay.io/biocontainers/trim-galore:0.6.7--hdfd78af_0",
+  "description": "自动化接头和低质量序列修剪工具",
+  "cmd": ["trim_galore", "--quality", "{quality}", "--length", "{length}", "--adapter", "{adapter}", "-o", "/output", "{input}"],
+  "params": [
+    {
+      "key": "input",
+      "label": "输入 FASTQ 文件",
+      "type": "file",
+      "required": true,
+      "description": "原始测序文件"
+    },
+    {
+      "key": "quality",
+      "label": "质量阈值",
+      "type": "number",
+      "default": 20,
+      "description": "Phred quality score 阈值"
+    },
+    {
+      "key": "length",
+      "label": "最小长度",
+      "type": "number",
+      "default": 20,
+      "description": "修剪后保留的最小 read 长度"
+    },
+    {
+      "key": "adapter",
+      "label": "接头序列",
+      "type": "string",
+      "default": "AGATCGGAAGAGC",
+      "description": "接头序列（默认 Illumina TruSeq）"
+    }
+  ]
+}

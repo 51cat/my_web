@@ -1,0 +1,39 @@
+{
+  "id": "bwa_mem",
+  "name": "BWA-MEM",
+  "type": "C / Docker",
+  "image": "biocontainers/bwa:v0.7.17_cv1",
+  "description": "短读序列比对到参考基因组",
+  "output_extension": ".sam",
+  "cmd": ["bwa", "mem", "-t", "{threads}", "{reference}", "{reads}", ">", "/output/{output}.sam"],
+  "params": [
+    {
+      "key": "reference",
+      "label": "参考基因组",
+      "type": "file",
+      "required": true,
+      "description": "参考基因组 .fa / .fasta 文件"
+    },
+    {
+      "key": "reads",
+      "label": "测序 Reads",
+      "type": "file",
+      "required": true,
+      "description": "FASTQ 格式测序文件"
+    },
+    {
+      "key": "threads",
+      "label": "线程数",
+      "type": "number",
+      "default": 8,
+      "description": "并行线程数"
+    },
+    {
+      "key": "output",
+      "label": "输出文件名前缀",
+      "type": "string",
+      "default": "aligned",
+      "description": "输出 SAM 文件的前缀名"
+    }
+  ]
+}

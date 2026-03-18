@@ -1,0 +1,1367 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>五一的生物信息工具箱</title>
+  <meta name="description" content="生物信息学命令行工具集合，支持Docker一键运行，实时日志查看，结果下载">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+    rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <style>
+    /* basic markdown styles */
+    .md-content h1,
+    .md-content h2,
+    .md-content h3 {
+      border-bottom: 1px solid #eee;
+      padding-bottom: 8px;
+      margin-top: 24px;
+      margin-bottom: 16px;
+    }
+
+    .md-content p {
+      margin-bottom: 16px;
+      line-height: 1.6;
+    }
+
+    .md-content pre {
+      background: #f6f8fa;
+      padding: 16px;
+      border-radius: 8px;
+      overflow: auto;
+      margin-bottom: 16px;
+      font-family: var(--font-mono);
+      font-size: 13px;
+    }
+
+    .md-content code {
+      background: #f6f8fa;
+      padding: 3px 6px;
+      border-radius: 4px;
+      font-family: var(--font-mono);
+      font-size: 13px;
+      color: #d73a49;
+    }
+
+    .md-content ul,
+    .md-content ol {
+      padding-left: 24px;
+      margin-bottom: 16px;
+    }
+
+    .md-content li {
+      margin-bottom: 4px;
+    }
+
+    .md-content blockquote {
+      padding: 0 16px;
+      color: #6a737d;
+      border-left: 4px solid #dfe2e5;
+      margin-bottom: 16px;
+    }
+
+    :root {
+      --bg-canvas: #EAEAE6;
+      --bg-tab-inactive: #94A3B0;
+      --bg-tab-mid: #CED7DE;
+      --bg-body: #D8E6F3;
+      --text-main: #111111;
+      --text-secondary: #555555;
+      --border: #000000;
+      --accent: #2a6496;
+      --accent-light: #3b82c4;
+      --radius-tab: 12px;
+      --font: 'Inter', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+      --font-mono: 'JetBrains Mono', 'Courier New', monospace;
+    }
+
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: var(--bg-body);
+      color: var(--text-main);
+      font-family: var(--font);
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    /* ── APP WINDOW ── */
+    .app-window {
+      width: 95vw;
+      height: 92vh;
+      max-width: 1500px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── TABS ── */
+    .tabs-container {
+      display: flex;
+      align-items: flex-end;
+      padding-left: 20px;
+      padding-right: 20px;
+      height: 46px;
+      z-index: 10;
+      justify-content: space-between;
+    }
+
+    .tabs-left {
+      display: flex;
+      align-items: flex-end;
+    }
+
+    .user-zone {
+      margin-bottom: 5px;
+    }
+
+    .btn-login-trigger {
+      background: rgba(0, 0, 0, 0.05);
+      border: 1px solid rgba(0, 0, 0, 0.1);
+      padding: 5px 15px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-login-trigger:hover {
+      background: rgba(0, 0, 0, 0.1);
+      color: var(--text-main);
+    }
+
+    /* ── LOGIN MODAL ── */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.4);
+      backdrop-filter: blur(4px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+
+    .modal-overlay.show {
+      display: flex;
+    }
+
+    .login-modal {
+      background: #fff;
+      width: 320px;
+      padding: 30px;
+      border-radius: 20px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+      text-align: center;
+    }
+
+    .login-modal h3 {
+      margin-bottom: 20px;
+      font-size: 20px;
+    }
+
+    .login-input {
+      width: 100%;
+      padding: 12px 15px;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      margin-bottom: 15px;
+      outline: none;
+      font-family: var(--font);
+    }
+
+    .btn-login-submit {
+      width: 100%;
+      padding: 12px;
+      background: var(--text-main);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .tab {
+      padding: 10px 36px 9px;
+      font-size: 12.5px;
+      font-weight: 500;
+      color: var(--text-main);
+      background: var(--bg-tab-inactive);
+      border-radius: var(--radius-tab) var(--radius-tab) 0 0;
+      margin-right: -10px;
+      cursor: pointer;
+      clip-path: polygon(8% 0, 92% 0, 100% 100%, 0% 100%);
+      min-width: 150px;
+      text-align: center;
+      transition: background 0.18s;
+      position: relative;
+    }
+
+    .tab:nth-child(2) {
+      background: var(--bg-tab-mid);
+      z-index: 1;
+    }
+
+    .tab.active {
+      background: var(--bg-canvas);
+      z-index: 3;
+      font-weight: 600;
+    }
+
+    /* ── BODY ── */
+    .app-body {
+      background: var(--bg-canvas);
+      flex: 1;
+      border-radius: 12px;
+      border-top-left-radius: 0;
+      display: flex;
+      overflow: hidden;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+    }
+
+    /* ── SIDEBAR ── */
+    .sidebar {
+      width: 300px;
+      min-width: 260px;
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.25);
+    }
+
+    .sidebar-header {
+      padding: 20px 22px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .sidebar-title {
+      font-size: 17px;
+      font-weight: 600;
+      letter-spacing: -0.3px;
+    }
+
+    .sidebar-search {
+      padding: 10px 14px;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    }
+
+    .sidebar-search input {
+      width: 100%;
+      padding: 7px 12px;
+      border: 1px solid rgba(0, 0, 0, 0.15);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.7);
+      font-family: var(--font);
+      font-size: 13px;
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+
+    .sidebar-search input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px rgba(42, 100, 150, 0.15);
+    }
+
+    .tool-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 10px 0;
+    }
+
+    .tool-list::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    .tool-list::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .tool-list::-webkit-scrollbar-thumb {
+      background: rgba(0, 0, 0, 0.15);
+      border-radius: 2px;
+    }
+
+    .tool-item {
+      padding: 14px 20px;
+      cursor: pointer;
+      border-left: 3px solid transparent;
+      transition: all 0.15s;
+      position: relative;
+    }
+
+    .tool-item:hover {
+      background: rgba(0, 0, 0, 0.035);
+    }
+
+    .tool-item.selected {
+      border-left-color: var(--accent);
+      background: rgba(42, 100, 150, 0.08);
+    }
+
+    .tool-type {
+      font-size: 9.5px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--accent);
+      font-weight: 700;
+      margin-bottom: 3px;
+    }
+
+    .tool-name {
+      font-size: 14.5px;
+      font-weight: 600;
+      margin-bottom: 2px;
+    }
+
+    .tool-desc {
+      font-size: 11.5px;
+      color: var(--text-secondary);
+      line-height: 1.4;
+    }
+
+    .tool-count {
+      position: absolute;
+      right: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: rgba(0, 0, 0, 0.06);
+      border-radius: 20px;
+      padding: 2px 8px;
+      font-size: 10px;
+      color: var(--text-secondary);
+    }
+
+    /* ── MAIN ── */
+    .main-editor {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+
+    .editor-header {
+      padding: 24px 28px 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 20px;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+    }
+
+    .editor-meta {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .editor-label {
+      font-size: 11px;
+      color: var(--text-secondary);
+      margin-bottom: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .editor-tool-name {
+      font-size: 26px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      color: var(--text-main);
+    }
+
+    .editor-image-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      margin-top: 5px;
+      font-size: 11.5px;
+      color: var(--accent);
+      background: rgba(42, 100, 150, 0.08);
+      padding: 2px 10px;
+      border-radius: 20px;
+      font-family: var(--font-mono);
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+
+    .btn {
+      border: none;
+      cursor: pointer;
+      font-family: var(--font);
+      font-weight: 600;
+      font-size: 13px;
+      border-radius: 22px;
+      padding: 10px 24px;
+      transition: all 0.15s;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-run {
+      background: var(--text-main);
+      color: #fff;
+    }
+
+    .btn-run:hover {
+      background: #333;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+
+    .btn-run:active {
+      transform: translateY(0);
+    }
+
+    .btn-run:disabled {
+      background: #aaa;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .btn-download {
+      background: #16a34a;
+      color: #fff;
+      display: none;
+    }
+
+    .btn-download:hover {
+      background: #15803d;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(22, 163, 74, 0.3);
+    }
+
+    .btn-download.visible {
+      display: inline-flex;
+    }
+
+    /* ── CONSOLE AREA ── */
+    .console-area {
+      flex: 1;
+      padding: 20px 28px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      overflow: hidden;
+    }
+
+    /* ── PARAM FORM ── */
+    .param-section {
+      flex-shrink: 0;
+      max-height: 52vh; /* 最大占据屏幕 52% 高度 */
+      overflow-y: auto;
+      padding-right: 8px; /* 留给滚动条空间 */
+      margin-bottom: 5px;
+    }
+
+    .param-section::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .param-section::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .param-section::-webkit-scrollbar-thumb {
+      background: rgba(0, 0, 0, 0.15);
+      border-radius: 3px;
+    }
+
+    .section-label {
+      font-size: 10.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-secondary);
+      margin-bottom: 10px;
+    }
+
+    .param-form {
+      background: rgba(255, 255, 255, 0.5);
+      border: 1px dashed rgba(0, 0, 0, 0.2);
+      border-radius: 10px;
+      padding: 18px 20px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px 20px;
+    }
+
+    .param-item {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .param-item.full-width {
+      grid-column: 1 / -1;
+    }
+
+    .param-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .param-required {
+      color: #e53e3e;
+      font-size: 10px;
+    }
+
+    .param-desc {
+      font-size: 11px;
+      color: var(--text-secondary);
+    }
+
+    .param-input {
+      padding: 8px 12px;
+      border: 1px solid rgba(0, 0, 0, 0.2);
+      border-radius: 7px;
+      background: rgba(255, 255, 255, 0.8);
+      font-family: var(--font);
+      font-size: 13px;
+      color: var(--text-main);
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+      width: 100%;
+    }
+
+    .param-input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2.5px rgba(42, 100, 150, 0.15);
+    }
+
+    /* File upload */
+    .file-upload-wrapper {
+      position: relative;
+      border: 1.5px dashed rgba(42, 100, 150, 0.4);
+      border-radius: 8px;
+      background: rgba(42, 100, 150, 0.04);
+      padding: 14px 16px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .file-upload-wrapper:hover,
+    .file-upload-wrapper.drag-over {
+      border-color: var(--accent);
+      background: rgba(42, 100, 150, 0.08);
+    }
+
+    .file-upload-wrapper input[type="file"] {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      cursor: pointer;
+    }
+
+    .file-upload-text {
+      font-size: 12.5px;
+      color: var(--accent);
+      font-weight: 500;
+    }
+
+    .file-upload-name {
+      font-size: 11.5px;
+      color: var(--text-secondary);
+      margin-top: 4px;
+      font-family: var(--font-mono);
+    }
+
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      gap: 12px;
+      color: var(--text-secondary);
+    }
+
+    .empty-icon {
+      font-size: 48px;
+      opacity: 0.4;
+    }
+
+    .empty-text {
+      font-size: 15px;
+      font-weight: 500;
+      opacity: 0.7;
+    }
+
+    .empty-sub {
+      font-size: 12.5px;
+      opacity: 0.5;
+    }
+
+    /* ── LOG AREA ── */
+    .log-section {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+
+    .log-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+
+    .log-status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #aaa;
+      display: inline-block;
+      margin-right: 6px;
+      transition: background 0.3s;
+    }
+
+    .log-status-dot.running {
+      background: #f59e0b;
+      animation: pulse 1s infinite;
+    }
+
+    .log-status-dot.done {
+      background: #22c55e;
+    }
+
+    .log-status-dot.error {
+      background: #ef4444;
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        opacity: 1
+      }
+
+      50% {
+        opacity: 0.4
+      }
+    }
+
+    .log-clear-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 11px;
+      color: var(--text-secondary);
+      font-family: var(--font);
+      padding: 2px 8px;
+      border-radius: 4px;
+      transition: background 0.15s;
+    }
+
+    .log-clear-btn:hover {
+      background: rgba(0, 0, 0, 0.06);
+    }
+
+    .output-box {
+      flex: 1;
+      background: #1a1e26;
+      color: #d4d9e8;
+      padding: 16px 18px;
+      border-radius: 10px;
+      font-family: var(--font-mono);
+      font-size: 12.5px;
+      overflow-y: auto;
+      line-height: 1.7;
+      border: 1px solid rgba(0, 0, 0, 0.3);
+      box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .output-box::-webkit-scrollbar {
+      width: 5px;
+    }
+
+    .output-box::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .output-box::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 3px;
+    }
+
+    .log-line {
+      display: flex;
+      gap: 10px;
+    }
+
+    .log-line .prompt {
+      color: #64748b;
+      user-select: none;
+      flex-shrink: 0;
+    }
+
+    .log-line.cmd .text {
+      color: #93c5fd;
+    }
+
+    .log-line.info .text {
+      color: #d4d9e8;
+    }
+
+    .log-line.stderr .text {
+      color: #fbbf24;
+    }
+
+    .log-line.success .text {
+      color: #4ade80;
+    }
+
+    .log-placeholder {
+      color: #3d4254;
+      font-style: italic;
+    }
+
+    /* ── PROGRESS BAR ── */
+    .progress-bar-wrap {
+      height: 2px;
+      background: rgba(0, 0, 0, 0.06);
+      border-radius: 1px;
+      overflow: hidden;
+      display: none;
+    }
+
+    .progress-bar-wrap.visible {
+      display: block;
+    }
+
+    .progress-bar-inner {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--accent-light));
+      width: 0%;
+      transition: width 0.4s ease;
+      border-radius: 1px;
+    }
+
+    .progress-bar-inner.indeterminate {
+      width: 40%;
+      animation: indeterminate 1.2s ease-in-out infinite;
+    }
+
+    @keyframes indeterminate {
+      0% {
+        transform: translateX(-100%);
+      }
+
+      100% {
+        transform: translateX(350%);
+      }
+    }
+
+    /* ── TOAST ── */
+    .toast {
+      position: fixed;
+      bottom: 28px;
+      right: 28px;
+      background: var(--text-main);
+      color: #fff;
+      padding: 12px 20px;
+      border-radius: 10px;
+      font-size: 13.5px;
+      font-weight: 500;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+      transform: translateY(80px);
+      opacity: 0;
+      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      z-index: 999;
+    }
+
+    .toast.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="app-window">
+
+    <!-- TABS -->
+    <div class="tabs-container">
+      <div class="tabs-left">
+        <div class="tab active" data-target="tab-tools">🧬 生信工具</div>
+        <div class="tab" data-target="tab-articles">📖 生信文档</div>
+        <div class="tab" data-target="tab-custom">⚙️ 开发中</div>
+      </div>
+      <div class="user-zone">
+        <button class="btn-login-trigger" id="login-btn" onclick="toggleLoginModal(true)">登录 / 注册</button>
+      </div>
+    </div>
+
+    <!-- BODY: TOOLS -->
+    <div class="app-body" id="tab-tools">
+
+      <!-- SIDEBAR -->
+      <div class="sidebar">
+        <div class="sidebar-header">
+          <div class="sidebar-title">工具库</div>
+          <span style="font-size:12px;color:var(--text-secondary)" id="tool-count-badge">加载中...</span>
+        </div>
+        <div class="sidebar-search">
+          <input type="text" id="search-input" placeholder="搜索工具..." oninput="filterTools(this.value)">
+        </div>
+        <div class="tool-list" id="tool-list">
+          <div style="padding:24px;color:var(--text-secondary);font-size:13px;text-align:center">正在加载工具列表...</div>
+        </div>
+      </div>
+
+      <!-- MAIN -->
+      <div class="main-editor">
+        <!-- HEADER -->
+        <div class="editor-header">
+          <div class="editor-meta">
+            <div class="editor-label">当前工具</div>
+            <div class="editor-tool-name" id="tool-title">请从左侧选择工具</div>
+            <div id="tool-image-tag" style="display:none" class="editor-image-tag">
+              <span>🐳</span><span id="tool-image-text"></span>
+            </div>
+          </div>
+          <div class="header-actions">
+            <button class="btn btn-download" id="btn-download" onclick="downloadResult()">⬇ 下载结果</button>
+            <button class="btn btn-run" id="btn-run" onclick="runTool()" disabled>▶ RUN CONTAINER</button>
+          </div>
+        </div>
+
+        <!-- PROGRESS -->
+        <div class="progress-bar-wrap" id="progress-wrap">
+          <div class="progress-bar-inner indeterminate" id="progress-bar"></div>
+        </div>
+
+        <!-- CONSOLE AREA -->
+        <div class="console-area">
+
+          <!-- PARAMS -->
+          <div class="param-section" id="param-section">
+            <div class="empty-state" id="empty-state">
+              <div class="empty-icon">🧪</div>
+              <div class="empty-text">选择一个工具开始分析</div>
+              <div class="empty-sub">支持 Docker 容器化运行，自动挂载输入/输出</div>
+            </div>
+            <div id="param-form-container" style="display:none">
+              <div class="section-label">参数配置</div>
+              <form class="param-form" id="param-form" onsubmit="return false"></form>
+            </div>
+          </div>
+
+          <!-- LOGS -->
+          <div class="log-section">
+            <div class="log-header">
+              <div class="section-label" style="margin:0">
+                <span class="log-status-dot" id="log-dot"></span>
+                TERMINAL OUTPUT
+              </div>
+              <button class="log-clear-btn" onclick="clearLog()">清空</button>
+            </div>
+            <div class="output-box" id="output-box">
+              <span class="log-placeholder">// 运行日志将在这里实时显示...</span>
+            </div>
+          </div>
+
+        </div><!-- /console-area -->
+      </div><!-- /main-editor -->
+    </div><!-- /tab-tools -->
+
+    <!-- BODY: ARTICLES -->
+    <div class="app-body" id="tab-articles" style="display:none; background:#fbfbfc;">
+      <div class="sidebar" style="background:#fff;">
+        <div class="sidebar-header">
+          <div class="sidebar-title">文档库</div>
+        </div>
+        <div class="sidebar-search">
+          <input type="text" id="article-search" placeholder="搜索文档标题..." oninput="filterArticles(this.value)">
+        </div>
+        <div class="tool-list" id="article-list">
+          <div style="padding:24px;text-align:center;color:var(--text-secondary);">加载中...</div>
+        </div>
+      </div>
+      <div class="main-editor" style="background:#fff;">
+        <div class="editor-header" style="border-bottom:1px solid rgba(0,0,0,0.05);">
+          <div class="editor-tool-name" id="article-title" style="margin:0;">选择一篇阅读</div>
+        </div>
+        <div class="console-area md-content" id="article-content"
+          style="background:#fff; color:var(--text-main); border:none; border-radius:0; box-shadow:none; overflow-y:auto;">
+          <div class="empty-state">
+            <div class="empty-icon">📖</div>
+            <div class="empty-text">选择或搜索 Markdown 文档进行阅读</div>
+          </div>
+        </div>
+      </div>
+    </div><!-- /tab-articles -->
+
+    <!-- BODY: CUSTOM -->
+    <div class="app-body" id="tab-custom"
+      style="display:none; justify-content:center; align-items:center; background:#fff;">
+      <div style="text-align:center; color:var(--text-main);">
+        <h2 style="font-size:28px; margin-bottom:12px;">这是您的自定义面板</h2>
+        <p style="color:var(--text-secondary); max-width:400px; line-height:1.6; margin:0 auto;">
+          您可以稍后往这里添加各类脚本、大屏展示或者任何想放的 HTML 内容，随心拓展。
+        </p>
+      </div>
+    </div><!-- /tab-custom -->
+
+  </div><!-- /app-window -->
+
+  <div class="toast" id="toast"></div>
+
+  <!-- LOGIN MODAL -->
+  <div class="modal-overlay" id="login-modal-overlay">
+    <div class="login-modal">
+      <h3>手机号登录</h3>
+      <p style="font-size: 12px; color: #777; margin-bottom: 20px;">欢迎来到五一的生信小站</p>
+      <input type="text" class="login-input" placeholder="请输入手机号" id="login-phone">
+      <div style="display: flex; gap: 10px;">
+        <input type="text" class="login-input" placeholder="验证码" style="flex: 1;">
+        <button class="btn" style="height: 42px; padding: 0 10px; font-size: 11px; margin-bottom: 15px; background: #f0f0f0; border: 1px solid #ddd;">获取验证码</button>
+      </div>
+      <button class="btn-login-submit" onclick="mockLogin()">立即登录</button>
+      <p style="margin-top: 20px; font-size: 12px; color: #999; cursor: pointer;" onclick="toggleLoginModal(false)">返回首页</p>
+    </div>
+  </div>
+
+  <script>
+    // ─── State ────────────────────────────────────────────────────────────────────
+    let allTools = [];
+    let currentTool = null;
+    let currentJobId = null;
+
+    // ─── Init ─────────────────────────────────────────────────────────────────────
+    async function init() {
+      try {
+        const res = await fetch('/api/tools');
+        allTools = await res.json();
+        renderToolList(allTools);
+        document.getElementById('tool-count-badge').textContent = `${allTools.length} 个工具`;
+      } catch (e) {
+        document.getElementById('tool-list').innerHTML =
+          '<div style="padding:20px;color:#e53e3e;font-size:13px;text-align:center">⚠ 无法连接后端服务</div>';
+      }
+    }
+
+    // ─── Tool List ────────────────────────────────────────────────────────────────
+    function renderToolList(tools) {
+      const list = document.getElementById('tool-list');
+      if (!tools.length) {
+        list.innerHTML = '<div style="padding:20px;color:var(--text-secondary);font-size:13px;text-align:center">没有找到工具</div>';
+        return;
+      }
+      list.innerHTML = tools.map(t => `
+    <div class="tool-item ${currentTool?.id === t.id ? 'selected' : ''}"
+         id="tool-item-${t.id}"
+         onclick="selectTool('${t.id}')">
+      <div class="tool-type">${t.type}</div>
+      <div class="tool-name">${t.name}</div>
+      <div class="tool-desc">${t.description}</div>
+    </div>
+  `).join('');
+    }
+
+    function filterTools(q) {
+      const filtered = allTools.filter(t =>
+        t.name.toLowerCase().includes(q.toLowerCase()) ||
+        t.description.toLowerCase().includes(q.toLowerCase())
+      );
+      renderToolList(filtered);
+    }
+
+    // ─── Select Tool ──────────────────────────────────────────────────────────────
+    function selectTool(id) {
+      currentTool = allTools.find(t => t.id === id);
+      if (!currentTool) return;
+      currentJobId = null;
+
+      // Update sidebar selection
+      document.querySelectorAll('.tool-item').forEach(el => el.classList.remove('selected'));
+      document.getElementById('tool-item-' + id)?.classList.add('selected');
+
+      // Update header
+      document.getElementById('tool-title').textContent = currentTool.name;
+      const imgTag = document.getElementById('tool-image-tag');
+      document.getElementById('tool-image-text').textContent = currentTool.image;
+      imgTag.style.display = 'inline-flex';
+
+      // Render params
+      renderParams(currentTool.params);
+
+      // Reset UI
+      document.getElementById('btn-run').disabled = false;
+      document.getElementById('btn-download').classList.remove('visible');
+      setLogDot('idle');
+      clearLog(true);
+    }
+
+    // ─── Dynamic Params ───────────────────────────────────────────────────────────
+    function renderParams(params) {
+      document.getElementById('empty-state').style.display = 'none';
+      const container = document.getElementById('param-form-container');
+      container.style.display = 'block';
+      const form = document.getElementById('param-form');
+      form.innerHTML = '';
+
+      params.forEach(p => {
+        const item = document.createElement('div');
+        item.className = 'param-item' + (p.type === 'file' ? ' full-width' : '');
+
+        const labelEl = document.createElement('div');
+        labelEl.className = 'param-label';
+        labelEl.innerHTML = `${p.label}${p.required ? ' <span class="param-required">必填</span>' : ''}`;
+        item.appendChild(labelEl);
+
+        if (p.description) {
+          const desc = document.createElement('div');
+          desc.className = 'param-desc';
+          desc.textContent = p.description;
+          item.appendChild(desc);
+        }
+
+        if (p.type === 'file') {
+          // File upload
+          const wrapper = document.createElement('div');
+          wrapper.className = 'file-upload-wrapper';
+          wrapper.innerHTML = `
+        <input type="file" id="param-${p.key}" name="${p.key}" accept="*">
+        <div class="file-upload-text">📂 点击或拖拽上传文件</div>
+        <div class="file-upload-name" id="file-name-${p.key}">未选择文件</div>
+      `;
+          wrapper.querySelector('input').addEventListener('change', function () {
+            const name = this.files[0]?.name || '未选择文件';
+            document.getElementById('file-name-' + p.key).textContent = name;
+            wrapper.style.borderStyle = 'solid';
+          });
+          // Drag & drop visual
+          wrapper.addEventListener('dragover', e => { e.preventDefault(); wrapper.classList.add('drag-over'); });
+          wrapper.addEventListener('dragleave', () => wrapper.classList.remove('drag-over'));
+          wrapper.addEventListener('drop', e => {
+            e.preventDefault(); wrapper.classList.remove('drag-over');
+            const files = e.dataTransfer.files;
+            if (files.length) {
+              const input = wrapper.querySelector('input');
+              const dt = new DataTransfer();
+              dt.items.add(files[0]);
+              input.files = dt.files;
+              document.getElementById('file-name-' + p.key).textContent = files[0].name;
+              wrapper.style.borderStyle = 'solid';
+            }
+          });
+          item.appendChild(wrapper);
+
+        } else if (p.type === 'select' || p.options) {
+          // Select Dropdown
+          const selectEl = document.createElement('select');
+          selectEl.className = 'param-input';
+          selectEl.id = 'param-' + p.key;
+          selectEl.name = p.key;
+          selectEl.style.cursor = 'pointer';
+
+          const options = p.options || [];
+          options.forEach(opt => {
+            const optionEl = document.createElement('option');
+            const val = typeof opt === 'object' ? opt.value : opt;
+            const label = typeof opt === 'object' ? opt.label : val;
+            optionEl.value = val;
+            optionEl.textContent = label;
+            if (p.default !== undefined && String(p.default) === String(val)) {
+              optionEl.selected = true;
+            }
+            selectEl.appendChild(optionEl);
+          });
+          item.appendChild(selectEl);
+
+        } else {
+          // Text / Number input
+          const inputEl = document.createElement('input');
+          inputEl.className = 'param-input';
+          inputEl.id = 'param-' + p.key;
+          inputEl.name = p.key;
+          inputEl.type = p.type === 'number' ? 'number' : 'text';
+          inputEl.placeholder = p.default !== undefined ? String(p.default) : '';
+          if (p.default !== undefined) inputEl.value = p.default;
+          item.appendChild(inputEl);
+        }
+
+        form.appendChild(item);
+      });
+    }
+
+    // ─── Run Tool ─────────────────────────────────────────────────────────────────
+    async function runTool() {
+      if (!currentTool) return;
+
+      const btn = document.getElementById('btn-run');
+      btn.disabled = true;
+      btn.textContent = '⬆ 准备上传...';
+      document.getElementById('btn-download').classList.remove('visible');
+      setLogDot('running');
+      showProgress(true);
+      clearLog(true);
+
+      const pbar = document.getElementById('progress-bar');
+      pbar.classList.remove('indeterminate');
+      pbar.style.width = '0%';
+
+      const formData = new FormData();
+      formData.append('toolId', currentTool.id);
+
+      const params = {};
+      currentTool.params.forEach(p => {
+        if (p.type === 'file') {
+          const fileInput = document.getElementById('param-' + p.key);
+          if (fileInput?.files[0]) formData.append(p.key, fileInput.files[0]);
+        } else {
+          const val = document.getElementById('param-' + p.key)?.value;
+          if (val !== undefined && val !== '') params[p.key] = val;
+        }
+      });
+      formData.append('params', JSON.stringify(params));
+
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', '/api/run', true);
+
+      xhr.upload.onprogress = (e) => {
+        if (e.lengthComputable) {
+          const percent = Math.round((e.loaded / e.total) * 100);
+          btn.textContent = `⬆ 上传中... ${percent}%`;
+          pbar.style.width = percent + '%';
+        }
+      };
+
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          const res = JSON.parse(xhr.responseText);
+          if (res.error) {
+            appendLog('error', '错误: ' + res.error);
+            resetRunBtn();
+            showProgress(false);
+            return;
+          }
+          currentJobId = res.jobId;
+          btn.textContent = '⏳ 分析运行中...';
+          pbar.style.width = '40%';
+          pbar.classList.add('indeterminate'); // 恢复跑马灯动画以表示正在计算
+          streamLogs(res.jobId);
+        } else {
+          appendLog('stderr', '请求失败: ' + xhr.statusText);
+          resetRunBtn();
+          showProgress(false);
+        }
+      };
+
+      xhr.onerror = () => {
+        appendLog('stderr', '网络错误或无法连接后端');
+        resetRunBtn();
+        showProgress(false);
+      };
+
+      xhr.send(formData);
+    }
+
+    // ─── SSE log stream ───────────────────────────────────────────────────────────
+    function streamLogs(jobId) {
+      const evtSource = new EventSource('/api/logs/' + jobId);
+
+      evtSource.onmessage = ({ data }) => {
+        const msg = JSON.parse(data);
+        if (msg.error) { appendLog('stderr', msg.error); return; }
+        if (msg.line !== undefined) {
+          const cls = msg.line.startsWith('$') ? 'cmd'
+            : msg.line.startsWith('[stderr]') ? 'stderr'
+              : msg.line.includes('完成') || msg.line.includes('DONE') || msg.line.includes('done') ? 'success'
+                : 'info';
+          appendLog(cls, msg.line);
+        }
+        if (msg.done) {
+          evtSource.close();
+          const ok = msg.status === 'done';
+          setLogDot(ok ? 'done' : 'error');
+          showProgress(false);
+          resetRunBtn();
+          if (ok) {
+            document.getElementById('btn-download').classList.add('visible');
+            showToast('✅ 运行完成，可以下载结果了！');
+          } else {
+            showToast('❌ 运行出现错误，请检查日志');
+          }
+        }
+      };
+
+      evtSource.onerror = () => {
+        evtSource.close();
+        appendLog('stderr', '与服务器的连接断开');
+        resetRunBtn();
+        showProgress(false);
+        setLogDot('error');
+      };
+    }
+
+    // ─── Log Helpers ──────────────────────────────────────────────────────────────
+    function appendLog(cls, text) {
+      const box = document.getElementById('output-box');
+      // Remove placeholder
+      const placeholder = box.querySelector('.log-placeholder');
+      if (placeholder) placeholder.remove();
+
+      const line = document.createElement('div');
+      line.className = `log-line ${cls}`;
+      const prompt = cls === 'cmd' ? '' : cls === 'stderr' ? '⚠' : cls === 'success' ? '✓' : '›';
+      line.innerHTML = prompt
+        ? `<span class="prompt">${prompt}</span><span class="text">${escHtml(text)}</span>`
+        : `<span class="text">${escHtml(text)}</span>`;
+      box.appendChild(line);
+      box.scrollTop = box.scrollHeight;
+    }
+
+    function clearLog(silent) {
+      document.getElementById('output-box').innerHTML =
+        '<span class="log-placeholder">// 运行日志将在这里实时显示...</span>';
+    }
+
+    function escHtml(s) {
+      return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    // ─── UI Helpers ───────────────────────────────────────────────────────────────
+    function setLogDot(state) {
+      const dot = document.getElementById('log-dot');
+      dot.className = 'log-status-dot ' + (state === 'idle' ? '' : state);
+    }
+
+    function showProgress(show) {
+      const wrap = document.getElementById('progress-wrap');
+      wrap.classList.toggle('visible', show);
+    }
+
+    function resetRunBtn() {
+      const btn = document.getElementById('btn-run');
+      btn.disabled = false;
+      btn.innerHTML = '▶ RUN CONTAINER';
+    }
+
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 3500);
+    }
+
+    // ─── Download ─────────────────────────────────────────────────────────────────
+    function downloadResult() {
+      if (!currentJobId) return;
+      let extVal = currentTool && currentTool.output_extension;
+      if (Array.isArray(extVal)) extVal = extVal.join(',');
+      const extParams = extVal ? `?ext=${encodeURIComponent(extVal)}` : '';
+      const a = document.createElement('a');
+      a.href = '/api/download/' + currentJobId + extParams;
+      a.download = '';
+      a.click();
+    }
+
+    // ─── Tab click (cosmetic) ─────────────────────────────────────────────────────
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+
+        // Switch panels
+        document.querySelectorAll('.app-body').forEach(el => el.style.display = 'none');
+        document.getElementById(tab.dataset.target).style.display = 'flex';
+      });
+    });
+
+
+    // ─── Login Logic ─────────────────────────────────────────────────────────────
+    function toggleLoginModal(show) {
+      document.getElementById('login-modal-overlay').classList.toggle('show', show);
+    }
+
+    function mockLogin() {
+      const phone = document.getElementById('login-phone').value;
+      if (!phone) {
+        showToast('请输入手机号');
+        return;
+      }
+      showToast('登录成功！欢迎，' + phone);
+      document.getElementById('login-btn').textContent = 'Hi, ' + phone.substring(0, 3) + '...';
+      toggleLoginModal(false);
+    }
+
+    init();
+    initArticles();
+
+    // ─── Document System (Articles) ───────────────────────────────────────────────
+    let allArticles = [];
+    async function initArticles() {
+      try {
+        const res = await fetch('/api/articles');
+        allArticles = await res.json();
+        renderArticleList(allArticles);
+      } catch (e) { }
+    }
+
+    function renderArticleList(list) {
+      const el = document.getElementById('article-list');
+      if (!list.length) {
+        el.innerHTML = '<div style="padding:24px;text-align:center;color:#888;">暂无文档。请在 article 文件夹放入 .md 文件。</div>';
+        return;
+      }
+      el.innerHTML = list.map(a => `
+    <div class="tool-item" onclick="loadArticle('${a.filename}', '${a.name}')">
+      <div class="tool-type">Markdown Document</div>
+      <div class="tool-name">${a.name}</div>
+    </div>
+  `).join('');
+    }
+
+    function filterArticles(q) {
+      renderArticleList(allArticles.filter(a => a.name.toLowerCase().includes(q.toLowerCase())));
+    }
+
+    async function loadArticle(filename, name) {
+      document.getElementById('article-title').textContent = name;
+      const content = document.getElementById('article-content');
+      content.innerHTML = '<div style="padding:40px; text-align:center; color:#888;">🔄 加载文档中...</div>';
+
+      try {
+        const res = await fetch('/api/articles/' + encodeURIComponent(filename));
+        const md = await res.text();
+        content.innerHTML = '<div style="max-width:850px; width:100%; margin:0 auto; padding-bottom:100px;">' + marked.parse(md) + '</div>';
+      } catch (e) {
+        content.innerHTML = '<div style="color:red;padding:24px;">加载文档失败。</div>';
+      }
+    }
+  </script>
+</body>
+
+</html>
