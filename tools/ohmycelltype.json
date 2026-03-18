@@ -20,6 +20,7 @@
       "key": "filters",
       "label": "过滤选项",
       "type": "multi-select",
+      "width": "full",
       "options": [
         { "label": "去除线粒体", "value": "mito" },
         { "label": "去除核糖体", "value": "ribo" },

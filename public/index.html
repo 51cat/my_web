@@ -1058,7 +1058,9 @@
 
       params.forEach(p => {
         const item = document.createElement('div');
-        item.className = 'param-item' + (p.type === 'file' ? ' full-width' : '');
+        // 如果 JSON 配置了 width: 'full'，或者类型是 file，则占满整行；否则默认 grid 布局下的 1/2
+        const isFull = p.width === 'full' || p.type === 'file';
+        item.className = 'param-item' + (isFull ? ' full-width' : '');
 
         const labelEl = document.createElement('div');
         labelEl.className = 'param-label';
@@ -1103,28 +1105,6 @@
           });
           item.appendChild(wrapper);
 
-        } else if (p.type === 'select' || p.options) {
-          // Select Dropdown
-          const selectEl = document.createElement('select');
-          selectEl.className = 'param-input';
-          selectEl.id = 'param-' + p.key;
-          selectEl.name = p.key;
-          selectEl.style.cursor = 'pointer';
-
-          const options = p.options || [];
-          options.forEach(opt => {
-            const optionEl = document.createElement('option');
-            const val = typeof opt === 'object' ? opt.value : opt;
-            const label = typeof opt === 'object' ? opt.label : val;
-            optionEl.value = val;
-            optionEl.textContent = label;
-            if (p.default !== undefined && String(p.default) === String(val)) {
-              optionEl.selected = true;
-            }
-            selectEl.appendChild(optionEl);
-          });
-          item.appendChild(selectEl);
-
         } else if (p.type === 'multi-select') {
           // Multi-checkbox group
           const group = document.createElement('div');
@@ -1147,6 +1127,28 @@
             group.appendChild(labelEl);
           });
           item.appendChild(group);
+
+        } else if (p.type === 'select' || (p.options && p.type !== 'multi-select')) {
+          // Select Dropdown
+          const selectEl = document.createElement('select');
+          selectEl.className = 'param-input';
+          selectEl.id = 'param-' + p.key;
+          selectEl.name = p.key;
+          selectEl.style.cursor = 'pointer';
+
+          const options = p.options || [];
+          options.forEach(opt => {
+            const optionEl = document.createElement('option');
+            const val = typeof opt === 'object' ? opt.value : opt;
+            const label = typeof opt === 'object' ? opt.label : val;
+            optionEl.value = val;
+            optionEl.textContent = label;
+            if (p.default !== undefined && String(p.default) === String(val)) {
+              optionEl.selected = true;
+            }
+            selectEl.appendChild(optionEl);
+          });
+          item.appendChild(selectEl);
 
         } else {
           // Text / Number input
