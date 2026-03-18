@@ -119,40 +119,57 @@ sudo systemctl restart nginx
 4. **结果自动打包 Zip**：Docker 容器退出后，Node.js 监听到进程关闭事件，它会使用 `archiver` 库自动将 `outputs/<UUID>/` 里面的所有结果文件打包为一层 zip 压缩包供前台下载。
 5. **知识文档库渲染**：前端第二个 Tab 刷新时会调用接口扫描 `/article` 下的 `.md` 文档。获取文档后在前端完全利用 `marked.js` 将它转为原生原风味的排版 HTML。
 
-### 3.2 如何添加属于你自己的新工具
+### 3.2 如何添加或修改属于你自己的新工具
+只需在 `tools/` 文件夹中直接创建或编辑 `.json` 配置文件，无需改动任何代码，前端界面和后端逻辑将自动同步生成。
 
-无论什么工具，添加均**不需要修改核心代码**！
-你只需在 `tools/` 文件夹里创建一个新的 `.json` 文件（例如添加你自己的 `OhMyCellType` 工具）：
-
+#### 示例配置详解 (以 `ohmycelltype.json` 为例)：
 ```json
 {
   "id": "ohmycelltype",
-  "name": "OhMyCellType",
-  "type": "PYTHON / DOCKER",
+  "name": "哦我的细胞 (OhMyCellType)",
   "image": "ohmycelltype:latest",
-  "description": "单细胞 RNA-seq 自动细胞类型注释工具",
+  "output_extension": ".csv", 
+  "cmd": ["ohmycelltype", "--input", "{input}", "--threads", "{threads}", "--filters", "{filters}"],
   "params": [
     {
       "key": "input",
-      "label": "输入文件 (h5ad / csv)",
+      "label": "测序数据",
       "type": "file",
       "required": true,
-      "description": "单细胞表达矩阵"
+      "width": "full"
     },
     {
-      "key": "species",
-      "label": "物种",
-      "type": "select",
-      "options": [{"label": "人类", "value": "human"}, {"label": "小鼠", "value": "mouse"}],
-      "default": "human"
+      "key": "filters",
+      "label": "预处理步骤",
+      "type": "multi-select",
+      "width": "full",
+      "options": [{"label": "去除线粒体", "value": "mito"}, {"label": "去除核糖体", "value": "ribo"}],
+      "default": ["mito"]
+    },
+    {
+      "key": "threads",
+      "label": "线程数",
+      "type": "number",
+      "default": 8
     }
-  ],
-  "cmd": "ohmycelltype --input {input_name} --output /output --species {species}"
+  ]
 }
 ```
 
-*简要规则说明：*
-- 当你的 `params` 中的项 `type="file"`，网页将被渲染为上传拖动框。当后端组装命令时， `{input_name}` 这个特别占位符，会被自动化地填补上**用户所传文件的实际首个文件名**（例如 `test.csv`）。由于我们在挂载时传进 Docker 内在 `/input` 下，因此后端将其拼接为了 `/input/test.csv`。
-- 如果是普通参数形式（例如 `number`, `string`, `select`），则会依据该字段的 `key`（如 `{species}`在配置中），无缝换成网页上的选中内容。（例如选择“小鼠”后，命令行将自动代入 `--species mouse`）。
+#### 关键字段及规则：
+1. **`cmd` (命令模板)**：
+   - 使用 `{key}` 语法来实时替换界面上用户输入的值。
+   - `{input}` 如果对应 `type: file`，后端会自动将其路径转换为 Docker 容器内的路径（如 `/input/yourdata.csv`）。
+2. **`params[].type` (支持的输入类型)**：
+   - `file`：渲染为精美的拖拽上传框。
+   - `select`：渲染为下拉菜单（需提供 `options` 列表）。
+   - `multi-select`：渲染为**复选框按钮组**，选中的多个结果将自动以**逗号**拼接（如 `mito,ribo`）。
+   - `number` / `text`：常规数字或文本框。
+3. **`params[].width` (排版控制)**：
+   - 设置为 `"full"` 则独占一行；不设置则默认平铺（通常两个参数并排一行）。
+4. **`output_extension` (下载策略)**：
+   - 若不设置：默认将整个输出目录打成 `.zip` 给用户。
+   - 设置为单一后缀（如 `.csv`）：若输出目录内只有 1 个文件匹配，将**跳过压缩直接下载原文件**。
+   - 支持多后缀（如 `[".csv", ".sam"]`）：只下载并打包选定格式的文件。
 
-只要添加类似的 JSON 文件，刷新你的网页，世界上又多了一个精美的容器化 Web 工具。
+只要在 `tools/` 目录添加了文件并保存，刷新你的网页即可实时在线预览效果。
