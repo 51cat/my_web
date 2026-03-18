@@ -13,9 +13,22 @@
     "--species", "{species}",
     "--min_cells", "{min_cells}",
     "--threads", "{threads}",
-    "--filters", "{filters}"
+    "--filters", "{filters}",
+    "--mode", "{mode}"
   ],
   "params": [
+    {
+      "key": "mode",
+      "label": "分析模式",
+      "type": "radio",
+      "options": [
+        { "label": "快速 (Fast)", "value": "fast" },
+        { "label": "平衡 (Balanced)", "value": "balanced" },
+        { "label": "高精度 (Sensitive)", "value": "sensitive" }
+      ],
+      "default": "balanced",
+      "description": "控制分析的精细程度与运行速度"
+    },
     {
       "key": "filters",
       "label": "过滤选项",

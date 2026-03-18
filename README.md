@@ -163,6 +163,7 @@ sudo systemctl restart nginx
 2. **`params[].type` (支持的输入类型)**：
    - `file`：渲染为精美的拖拽上传框。
    - `select`：渲染为下拉菜单（需提供 `options` 列表）。
+   - `radio`：渲染为**单选按钮组**。
    - `multi-select`：渲染为**复选框按钮组**，选中的多个结果将自动以**逗号**拼接（如 `mito,ribo`）。
    - `number` / `text`：常规数字或文本框。
 3. **`params[].width` (排版控制)**：

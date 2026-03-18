@@ -1105,14 +1105,18 @@
           });
           item.appendChild(wrapper);
 
-        } else if (p.type === 'multi-select') {
-          // Multi-checkbox group
+        } else if (p.type === 'multi-select' || p.type === 'radio') {
+          // Multi-checkbox or Radio group
           const group = document.createElement('div');
           group.className = 'multi-select-group';
           group.id = 'group-' + p.key;
 
           const options = p.options || [];
-          const defaults = Array.isArray(p.default) ? p.default : (p.default ? String(p.default).split(',') : []);
+          const inputType = p.type === 'radio' ? 'radio' : 'checkbox';
+          const inputName = p.type === 'radio' ? `radio-${p.key}` : `multi-${p.key}`;
+          
+          // For radio, default is a single value; for multi-select, it might be an array
+          const defaults = Array.isArray(p.default) ? p.default.map(String) : [String(p.default)];
 
           options.forEach(opt => {
             const val = typeof opt === 'object' ? opt.value : opt;
@@ -1120,15 +1124,19 @@
 
             const labelEl = document.createElement('label');
             labelEl.className = 'multi-select-item';
+            
+            // For radio, match single value. For checkbox, check inclusions.
+            const isChecked = defaults.includes(String(val));
+
             labelEl.innerHTML = `
-              <input type="checkbox" name="multi-${p.key}" value="${val}" ${defaults.includes(String(val)) ? 'checked' : ''}>
+              <input type="${inputType}" name="${inputName}" value="${val}" ${isChecked ? 'checked' : ''}>
               ${label}
             `;
             group.appendChild(labelEl);
           });
           item.appendChild(group);
 
-        } else if (p.type === 'select' || (p.options && p.type !== 'multi-select')) {
+        } else if (p.type === 'select' || (p.options && p.type !== 'multi-select' && p.type !== 'radio')) {
           // Select Dropdown
           const selectEl = document.createElement('select');
           selectEl.className = 'param-input';
@@ -1194,6 +1202,9 @@
           const checkboxes = document.querySelectorAll(`input[name="multi-${p.key}"]:checked`);
           const vals = Array.from(checkboxes).map(cb => cb.value);
           if (vals.length > 0) params[p.key] = vals.join(',');
+        } else if (p.type === 'radio') {
+          const radio = document.querySelector(`input[name="radio-${p.key}"]:checked`);
+          if (radio) params[p.key] = radio.value;
         } else {
           const val = document.getElementById('param-' + p.key)?.value;
           if (val !== undefined && val !== '') params[p.key] = val;
